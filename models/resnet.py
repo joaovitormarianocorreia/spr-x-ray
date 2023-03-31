@@ -17,10 +17,7 @@ class ResNet(nn.Module):
         }
 
         for name, param in self.model.named_parameters():
-            if 'conv' in name:
-                param.requires_grad = False
-            else:
-                param.requires_grad = True
+            param.requires_grad = False
 
         self.feat = create_feature_extractor(
             self.model,

@@ -143,14 +143,15 @@ class XRaySingleDataset(torch.utils.data.Dataset):
         return image1, label
 
     def eval(self, model, x):
-
         indices = np.random.randint(self.images.shape[0], size=self.nr_pairs)
+        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
         Yout = []
         for idx in indices:
             xtrain, ytrain = self[idx]
+            xtrain = xtrain.to(device)
             xtrain = xtrain.float()/255.0
             xtrain = xtrain[None, ...]
-            y = 0.5*model(x, xtrain) - 0.5*model(xtrain, x)+ytrain
+            y = 0.5*model(x, xtrain).cpu() - 0.5*model(xtrain, x).cpu()+ytrain
             Yout.append(y.numpy())
 
         return np.mean(np.squeeze(Yout)), np.std(np.squeeze(Yout))
