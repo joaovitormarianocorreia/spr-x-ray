@@ -11,6 +11,7 @@ from models.resnet import ResNet
 from loader import XRayPairDataset
 from torch.utils.data import DataLoader
 from albumentations.pytorch import ToTensorV2
+from torch.optim.lr_scheduler import CosineAnnealingWarmRestarts
 
 
 def main(args):
@@ -86,6 +87,13 @@ def main(args):
 
     optimizer = optim.Adam(model.parameters(), lr=args.lr)
 
+    scheduler = CosineAnnealingWarmRestarts(
+        optimizer,
+        T_0=10,
+        T_mult=1,
+        eta_min=1e-4
+    )
+
     bar = tqdm.tqdm(range(args.epochs))
     for epoch in bar:
         running_loss = 0.0
@@ -104,6 +112,8 @@ def main(args):
             loss.backward()
 
             optimizer.step()
+
+            scheduler.step(epoch + i / len(dataloader))
 
             running_loss += loss.item()
 
@@ -130,9 +140,13 @@ def main(args):
 
             print("Validation loss: ", val_loss/(len(dataloader_val)))
             checkpoint_path = opath.join(
-                args.weights_dir, f"mobilenet_reg_{epoch+1}.pth")
+                args.weights_dir, f"resnet_param_true_lr_e-4_epoch_{epoch+1}.pth")
             torch.save(model.state_dict(), checkpoint_path)
 
+        scheduler.step()
+
+    checkpoint_path = opath.join(
+        args.weights_dir, f"resnet_epochs-{args.epochs}_batch-{args.batch}_lr-{args.lr}_pairs-{args.nr_pairs}.pth")
     torch.save(model.state_dict(), checkpoint_path)
 
 
