@@ -29,7 +29,13 @@ class XRayDataset(torch.utils.data.Dataset):
 
 
 class XRayPairDataset(torch.utils.data.Dataset):
-    def __init__(self, annotations_file, img_dir, transform=None, gray=True, nr_pairs=1):
+    def __init__(self,
+                 annotations_file,
+                 img_dir,
+                 transform=None,
+                 gray=True,
+                 nr_pairs=1):
+
         self.gray = gray
         self.img_labels = pd.read_csv(annotations_file)
 
@@ -40,7 +46,7 @@ class XRayPairDataset(torch.utils.data.Dataset):
         for idx, imgid in enumerate(self.img_labels["imageId"]):
             img_path = os.path.join(
                 str(self.img_dir),
-                str(self.img_labels.iloc[idx, 0]).zfill(6)+'.png'
+                str(self.img_labels.iloc[idx, 0]).zfill(6)  # +'.png'
             )
             images.append(img_path)
 
@@ -91,7 +97,13 @@ class XRayPairDataset(torch.utils.data.Dataset):
 
 
 class XRaySingleDataset(torch.utils.data.Dataset):
-    def __init__(self, annotations_file, img_dir, transform=None, gray=True, nr_pairs=1):
+    def __init__(self,
+                 annotations_file,
+                 img_dir,
+                 transform=None,
+                 gray=True,
+                 nr_pairs=1):
+
         self.gray = gray
         self.nr_pairs = nr_pairs
         self.img_labels = pd.read_csv(annotations_file)
@@ -155,3 +167,26 @@ class XRaySingleDataset(torch.utils.data.Dataset):
             Yout.append(y.numpy())
 
         return np.mean(np.squeeze(Yout)), np.std(np.squeeze(Yout))
+
+
+class XRayEmbeddingDataset(torch.utils.data.Dataset):
+    def __init__(self, annotations_file, img_dir):
+        self.img_labels = pd.read_csv(annotations_file)
+        self.img_dir = img_dir
+
+        images = []
+        for idx, imgid in enumerate(self.img_labels["imageId"]):
+            img_path = os.path.join(str(self.img_dir),
+                                    str(self.img_labels.iloc[idx, 0])+'.pt')
+            images.append(img_path)
+        self.X = np.array(images, dtype=str)
+        self.Y = np.array(self.img_labels["age"].tolist(), dtype=float)/100.0
+
+    def __len__(self):
+        return len(self.img_labels)
+
+    def __getitem__(self, idx):
+        img_path1 = self.X[idx]
+        image1 = torch.load(img_path1)
+        label = self.Y[idx]
+        return image1, label

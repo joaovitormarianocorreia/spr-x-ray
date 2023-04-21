@@ -4,7 +4,7 @@ import os.path as opath
 import torch
 from torch.utils.data import DataLoader
 from torchvision.transforms import Resize, Compose
-from mlx.dataloader.loader import XRayDataset
+from loader import XRayDataset
 import timm
 from timm.data.transforms_factory import create_transform
 from timm.data import resolve_data_config
@@ -17,7 +17,7 @@ def main(args):
     else:
         device = args.device
 
-    model = timm.create_model("swin_base_patch4_window12_384", 
+    model = timm.create_model("swin_base_patch4_window12_384",
                               pretrained=True,
                               num_classes=0)
 
